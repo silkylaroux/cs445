@@ -182,7 +182,7 @@ plt.grid(True)
 # 
 # Now, using the best hidden layer structure found, write the code that varies the number of training iterations. The results you get will be different from the ones shown below.
 
-# In[ ]:
+# In[15]:
 
 
 import pandas as pd
@@ -192,12 +192,12 @@ hiddens = [0] + [[nu] * nl for nu in nIterationsList for nl in [1, 2, 3, 4, 5]]
 #print('hiddens =', hiddens)
 #for iternum in nIterationsList:
     #print(iternum)
-for n in range(len(nIterationsList)):
-    for hids in hiddens: 
-        nnet = nn.NeuralNetwork(Xtrain.shape[1], hids, Ttrain.shape[1])
-        nnet.train(Xtrain, Ttrain, nIterationsList[n])
-        #nIterationsList.append([nnet.use(Xtrain),nnet.use(Xtest)])
-        errors.append([hids, rmse(Ttrain, nnet.use(Xtrain)), rmse(Ttest, nnet.use(Xtest))])
+#for n in range(len(nIterationsList)):
+for hids in nIterationsList: 
+    nnet = nn.NeuralNetwork(Xtrain.shape[1], hids, Ttrain.shape[1])
+    nnet.train(Xtrain, Ttrain, hids)
+    #nIterationsList.append([nnet.use(Xtrain),nnet.use(Xtest)])
+    errors.append([hids, rmse(Ttrain, nnet.use(Xtrain)), rmse(Ttest, nnet.use(Xtest))])
 errors = pd.DataFrame(errors)
 
 #  ...  insert code here using the code in the previous code block as a guide ...
@@ -241,7 +241,7 @@ plt.grid(True)
 # 
 # A different, but similar, grading script will be used to grade your checked-in notebook. It will include other tests.
 
-# In[ ]:
+# In[14]:
 
 
 get_ipython().magic('run -i A2grader.py')
