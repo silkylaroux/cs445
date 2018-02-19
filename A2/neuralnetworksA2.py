@@ -1,4 +1,3 @@
-
 import numpy as np
 import mlutilities as ml
 import matplotlib.pyplot as plt
@@ -79,7 +78,7 @@ class NeuralNetwork:
         Zprev = X
         for i in range(len(self.nhs)):
             V = self.Vs[i]
-            Zprev = self.activation(Zprev @ V[1:, :] + V[0:1, :])  # handling bias weight without adding column of 1's
+            Zprev = np.tanh(Zprev @ V[1:, :] + V[0:1, :])  # handling bias weight without adding column of 1's
         Y = Zprev @ self.W[1:, :] + self.W[0:1, :]
         return 0.5 * np.mean((T-Y)**2)
 
@@ -90,7 +89,7 @@ class NeuralNetwork:
         Z = [Zprev]
         for i in range(len(self.nhs)):
             V = self.Vs[i]
-            Zprev = self.activation(Zprev @ V[1:, :] + V[0:1, :])
+            Zprev = np.tanh(Zprev @ V[1:, :] + V[0:1, :])
             Z.append(Zprev)
         Y = Zprev @ self.W[1:, :] + self.W[0:1, :]
         # Do backward pass, starting with delta in output layer
@@ -98,14 +97,13 @@ class NeuralNetwork:
         dW = np.vstack((np.ones((1, delta.shape[0])) @ delta, 
                         Z[-1].T @ delta))
         dVs = []
-        #delta = (1 - Z[-1]**2) * (delta @ self.W[1:, :].T)
-        delta = self.activationDerivative(Z[-1]) * (delta @ self.W[1:, :].T)
+        delta = (1 - Z[-1]**2) * (delta @ self.W[1:, :].T)
         for Zi in range(len(self.nhs), 0, -1):
             Vi = Zi - 1  # because X is first element of Z
             dV = np.vstack((np.ones((1, delta.shape[0])) @ delta,
                             Z[Zi-1].T @ delta))
             dVs.insert(0, dV)
-            delta = (delta @ self.Vs[Vi][1:, :].T) * self.activationDerivative(Z[-1])
+            delta = (delta @ self.Vs[Vi][1:, :].T) * (1 - Z[Zi-1]**2)
         return self._pack(dVs, dW)
 
     def train(self, X, T, nIterations=100, verbose=False,
@@ -156,16 +154,15 @@ class NeuralNetwork:
         Z = [Zprev]
         for i in range(len(self.nhs)):
             V = self.Vs[i]
-            Zprev = self.activation(Zprev @ V[1:, :] + V[0:1, :])
+            Zprev = np.tanh(Zprev @ V[1:, :] + V[0:1, :])
             Z.append(Zprev)
         Y = Zprev @ self.W[1:, :] + self.W[0:1, :]
         Y = self._unstandardizeT(Y)
         return (Y, Z[1:]) if allOutputs else Y
     
-    # Added to class to replace tanh calls
     def activation(self, weighted_sum):
         return np.tanh(weighted_sum)
-
+    
     def activationDerivative(self, activation_value):
         return 1 - activation_value * activation_value
     

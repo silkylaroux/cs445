@@ -34,7 +34,7 @@
 
 # Start with the ```NeuralNetwork``` class defined in lecture notes 09. Put that class definition as written into *neuralnetworks.py* into your current directory.  Also place *mlutilities.py* from lecture notes 09 in your current directory. If this is done correctly, then the following code should run and produce results similar to what is shown here.
 
-# In[80]:
+# In[173]:
 
 
 import numpy as np
@@ -42,7 +42,7 @@ import matplotlib.pyplot as plt
 get_ipython().magic('matplotlib inline')
 
 
-# In[81]:
+# In[174]:
 
 
 import neuralnetworks as nn
@@ -50,12 +50,12 @@ import neuralnetworks as nn
 X = np.arange(10).reshape((-1,1))
 T = np.sin(X)
 
-nnet = nn.NeuralNetwork(1, [10], 1)
+nnet = nn.NeuralNetwork(1, [10,10], 1)
 nnet.train(X, T, 100, verbose=True)
 nnet
 
 
-# In[82]:
+# In[141]:
 
 
 plt.figure(figsize=(8, 12))
@@ -80,34 +80,34 @@ nnet.draw()
 #         
 # Now replace the code in the appropriate places in the ```NeuralNetwork``` class so that ```np.tanh``` is replaced with a call to the ```self.activation``` method and its derivative is replaced by calls to ```self.activationDerivative```.
 
-# In[87]:
+# In[185]:
 
 
-import neuralnetworksA2 as nn2
+import neuralnetworks as nn2
 
-nnet = nn2.NeuralNetwork(1, [10], 1)
+nnet = nn2.NeuralNetwork(1, [10,10], 1)
 
 
-# In[88]:
+# In[186]:
 
 
 [nnet.activation(s) for s in [-2, -0.5, 0, 0.5, 2]]
 
 
-# In[89]:
+# In[177]:
 
 
 [nnet.activationDerivative(nnet.activation(s)) for s in [-2, -0.5, 0, 0.5, 2]]
 
 
-# In[90]:
+# In[178]:
 
 
 nnet.train(X, T, 100, verbose=True)
 nnet
 
 
-# In[32]:
+# In[100]:
 
 
 plt.figure(figsize=(8, 12))
@@ -128,7 +128,7 @@ nnet.draw()
 
 # Using your new ```NeuralNetwork``` class, you can compare the error obtained on a given data set by looping over various hidden layer structures.  Here is an example using the simple toy data from above.
 
-# In[91]:
+# In[187]:
 
 
 import random
@@ -143,20 +143,20 @@ Xtrain, Ttrain = X[trainRows, :], T[trainRows, :]
 Xtest, Ttest = X[testRows, :], T[testRows, :]
 
 
-# In[92]:
+# In[189]:
 
 
 Xtrain.shape, Ttrain.shape, Xtest.shape, Ttest.shape
 
 
-# In[93]:
+# In[181]:
 
 
 def rmse(A, B):
     return np.sqrt(np.mean((A - B)**2))
 
 
-# In[94]:
+# In[184]:
 
 
 import pandas as pd
@@ -182,7 +182,7 @@ plt.grid(True)
 # 
 # Now, using the best hidden layer structure found, write the code that varies the number of training iterations. The results you get will be different from the ones shown below.
 
-# In[101]:
+# In[182]:
 
 
 import pandas as pd
@@ -195,7 +195,7 @@ hiddens = [10,10,10,10] #[0] + [nu * nl for nu in nIterationsList for nl in [1]]
 #for n in range(len(nIterationsList)):
 for hids in nIterationsList: 
     #print('hids', hids)
-    nnet = nn2.NeuralNetwork(Xtrain.shape[1], 10, Ttrain.shape[1])
+    nnet = nn2.NeuralNetwork(Xtrain.shape[1], [10], Ttrain.shape[1])
     nnet.train(Xtrain, Ttrain, hids)
     #nIterationsList.append([nnet.use(Xtrain),nnet.use(Xtest)])
     errors.append([hids, rmse(Ttrain, nnet.use(Xtrain)), rmse(Ttest, nnet.use(Xtest))])
@@ -211,6 +211,22 @@ plt.plot(errors.values[:, 1:], 'o-')
 plt.legend(('Train RMSE', 'Test RMSE'))
 plt.xticks(range(errors.shape[0]), nIterationsList) #, rotation=30, horizontalalignment='right')
 plt.grid(True)
+
+
+# In[193]:
+
+
+X = np.arange(300).reshape((-1, 3))
+T = X[:,0:2] + 0.1 * X[:,1:2] * X[:,2:3]
+print(T.shape)
+print(X.shape)
+import neuralnetworksA2 as nn2
+
+nnet = nn2.NeuralNetwork(3, [10], 2)
+print(nnet.activation(-0.8))
+print(nnet)
+nnet.train(X, T, 100)
+error = np.sqrt(np.mean((T - nnet.use(X))**2))
 
 
 # ### Experiments wtih Automobile Data
@@ -243,7 +259,7 @@ plt.grid(True)
 # 
 # A different, but similar, grading script will be used to grade your checked-in notebook. It will include other tests.
 
-# In[102]:
+# In[1]:
 
 
 get_ipython().magic('run -i A2grader.py')
