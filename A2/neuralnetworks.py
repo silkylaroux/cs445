@@ -1,4 +1,3 @@
-
 import numpy as np
 import mlutilities as ml
 import matplotlib.pyplot as plt
@@ -79,7 +78,7 @@ class NeuralNetwork:
         Zprev = X
         for i in range(len(self.nhs)):
             V = self.Vs[i]
-            Zprev = self.activation(Zprev @ V[1:, :] + V[0:1, :])  # handling bias weight without adding column of 1's
+            Zprev = np.tanh(Zprev @ V[1:, :] + V[0:1, :])  # handling bias weight without adding column of 1's
         Y = Zprev @ self.W[1:, :] + self.W[0:1, :]
         return 0.5 * np.mean((T-Y)**2)
 
@@ -90,7 +89,7 @@ class NeuralNetwork:
         Z = [Zprev]
         for i in range(len(self.nhs)):
             V = self.Vs[i]
-            Zprev = self.activation(Zprev @ V[1:, :] + V[0:1, :])
+            Zprev = np.tanh(Zprev @ V[1:, :] + V[0:1, :])
             Z.append(Zprev)
         Y = Zprev @ self.W[1:, :] + self.W[0:1, :]
         # Do backward pass, starting with delta in output layer
@@ -155,19 +154,12 @@ class NeuralNetwork:
         Z = [Zprev]
         for i in range(len(self.nhs)):
             V = self.Vs[i]
-            Zprev = self.activation(Zprev @ V[1:, :] + V[0:1, :])
+            Zprev = np.tanh(Zprev @ V[1:, :] + V[0:1, :])
             Z.append(Zprev)
         Y = Zprev @ self.W[1:, :] + self.W[0:1, :]
         Y = self._unstandardizeT(Y)
         return (Y, Z[1:]) if allOutputs else Y
-    
-    # Added to class to replace tanh calls
-    def activation(self, weighted_sum):
-        return np.tanh(weighted_sum)
 
-    def activationDerivative(self, activation_value):
-        return 1 - activation_value * activation_value
-    
     def getNumberOfIterations(self):
         return self.numberOfIterations
 

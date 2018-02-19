@@ -98,8 +98,10 @@ class NeuralNetwork:
         dW = np.vstack((np.ones((1, delta.shape[0])) @ delta, 
                         Z[-1].T @ delta))
         dVs = []
-        #delta = (1 - Z[-1]**2) * (delta @ self.W[1:, :].T)
+        delta2 = (1 - Z[-1]**2) * (delta @ self.W[1:, :].T)
+        print(delta2)
         delta = self.activationDerivative(Z[-1]) * (delta @ self.W[1:, :].T)
+        print(delta)
         for Zi in range(len(self.nhs), 0, -1):
             Vi = Zi - 1  # because X is first element of Z
             dV = np.vstack((np.ones((1, delta.shape[0])) @ delta,
