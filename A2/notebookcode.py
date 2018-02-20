@@ -22,7 +22,7 @@
 
 # # Assignment 2: Neural Network Regression
 
-# *Type your name here and rewrite all of the following sections.  Add more sections to present your code, results, and discussions.*
+# Damian Armijo
 
 # ## Overview
 
@@ -34,7 +34,7 @@
 
 # Start with the ```NeuralNetwork``` class defined in lecture notes 09. Put that class definition as written into *neuralnetworks.py* into your current directory.  Also place *mlutilities.py* from lecture notes 09 in your current directory. If this is done correctly, then the following code should run and produce results similar to what is shown here.
 
-# In[173]:
+# In[1]:
 
 
 import numpy as np
@@ -42,7 +42,7 @@ import matplotlib.pyplot as plt
 get_ipython().magic('matplotlib inline')
 
 
-# In[174]:
+# In[22]:
 
 
 import neuralnetworks as nn
@@ -50,12 +50,12 @@ import neuralnetworks as nn
 X = np.arange(10).reshape((-1,1))
 T = np.sin(X)
 
-nnet = nn.NeuralNetwork(1, [10,10], 1)
+nnet = nn.NeuralNetwork(1, [10], 1)
 nnet.train(X, T, 100, verbose=True)
 nnet
 
 
-# In[141]:
+# In[6]:
 
 
 plt.figure(figsize=(8, 12))
@@ -80,34 +80,34 @@ nnet.draw()
 #         
 # Now replace the code in the appropriate places in the ```NeuralNetwork``` class so that ```np.tanh``` is replaced with a call to the ```self.activation``` method and its derivative is replaced by calls to ```self.activationDerivative```.
 
-# In[185]:
+# In[2]:
 
 
-import neuralnetworks as nn2
+import neuralnetworksA2 as nn2
 
-nnet = nn2.NeuralNetwork(1, [10,10], 1)
+nnet = nn2.NeuralNetwork(1, [10], 1)
 
 
-# In[186]:
+# In[25]:
 
 
 [nnet.activation(s) for s in [-2, -0.5, 0, 0.5, 2]]
 
 
-# In[177]:
+# In[26]:
 
 
 [nnet.activationDerivative(nnet.activation(s)) for s in [-2, -0.5, 0, 0.5, 2]]
 
 
-# In[178]:
+# In[27]:
 
 
 nnet.train(X, T, 100, verbose=True)
 nnet
 
 
-# In[100]:
+# In[28]:
 
 
 plt.figure(figsize=(8, 12))
@@ -128,7 +128,7 @@ nnet.draw()
 
 # Using your new ```NeuralNetwork``` class, you can compare the error obtained on a given data set by looping over various hidden layer structures.  Here is an example using the simple toy data from above.
 
-# In[187]:
+# In[14]:
 
 
 import random
@@ -143,20 +143,20 @@ Xtrain, Ttrain = X[trainRows, :], T[trainRows, :]
 Xtest, Ttest = X[testRows, :], T[testRows, :]
 
 
-# In[189]:
+# In[15]:
 
 
 Xtrain.shape, Ttrain.shape, Xtest.shape, Ttest.shape
 
 
-# In[181]:
+# In[9]:
 
 
 def rmse(A, B):
     return np.sqrt(np.mean((A - B)**2))
 
 
-# In[184]:
+# In[29]:
 
 
 import pandas as pd
@@ -182,7 +182,7 @@ plt.grid(True)
 # 
 # Now, using the best hidden layer structure found, write the code that varies the number of training iterations. The results you get will be different from the ones shown below.
 
-# In[182]:
+# In[21]:
 
 
 import pandas as pd
@@ -195,7 +195,7 @@ hiddens = [10,10,10,10] #[0] + [nu * nl for nu in nIterationsList for nl in [1]]
 #for n in range(len(nIterationsList)):
 for hids in nIterationsList: 
     #print('hids', hids)
-    nnet = nn2.NeuralNetwork(Xtrain.shape[1], [10], Ttrain.shape[1])
+    nnet = nn2.NeuralNetwork(Xtrain.shape[1], [10,10,10,10], Ttrain.shape[1])
     nnet.train(Xtrain, Ttrain, hids)
     #nIterationsList.append([nnet.use(Xtrain),nnet.use(Xtest)])
     errors.append([hids, rmse(Ttrain, nnet.use(Xtrain)), rmse(Ttest, nnet.use(Xtest))])
@@ -213,7 +213,7 @@ plt.xticks(range(errors.shape[0]), nIterationsList) #, rotation=30, horizontalal
 plt.grid(True)
 
 
-# In[193]:
+# In[20]:
 
 
 X = np.arange(300).reshape((-1, 3))
@@ -246,6 +246,126 @@ error = np.sqrt(np.mean((T - nnet.use(X))**2))
 #   * horsepower
 #   
 # as output variables.
+
+# In[3]:
+
+
+def makeMPGData(filename='auto-mpg.data'):
+    np.set_printoptions(suppress=True)
+    #np.set_printoptions(precision=4)
+    def missingIsNan(s):
+        return np.nan if s == b'?' else float(s)
+    data = np.loadtxt(filename, usecols=range(8), converters={3: missingIsNan})
+    print("Read",data.shape[0],"rows and",data.shape[1],"columns from",filename)
+    goodRowsMask = np.isnan(data).sum(axis=1) == 0
+    data = data[goodRowsMask,:]
+    print("After removing rows containing question marks, data has",data.shape[0],"rows and",data.shape[1],"columns.")
+    X = data[:,1:3]
+    otherX = data[:,4:]
+    X = np.hstack((X,otherX))
+    #print(X.shape)
+    #print(X)
+    #print(otherX.shape)
+    #print(otherX)
+    T = data[:,0:1]
+    otherT = data[:,3:4]
+    T = np.hstack((T, otherT))
+    Xnames =  ['cylinders','displacement','weight','acceleration','year','origin']
+    print(X.shape)
+    print(Xnames)
+    print(X)
+    Tnames = ['mpg', 'horsepower']
+    print(T.shape)
+    print(Tnames)
+    print(T)
+    return X,T,Xnames,Tnames
+
+
+# In[4]:
+
+
+X,T,Xnames,Tname = makeMPGData()
+
+
+# In[ ]:
+
+
+print(T.shape)
+print(X.shape)
+import neuralnetworksA2 as nn2
+
+nnet = nn2.NeuralNetwork(6, [10], 2)
+print(nnet.activation(-0.8))
+print(nnet)
+
+nnet.train(X, T, 100, verbose=True)
+print(nnet)
+error = np.sqrt(np.mean((T - nnet.use(X))**2))
+print(error)
+
+
+# In[11]:
+
+
+import random
+
+nRows = X.shape[0]
+rows = np.arange(nRows)
+np.random.shuffle(rows)
+nTrain = int(nRows * 0.8)
+trainRows = rows[:nTrain]
+testRows = rows[nTrain:]
+Xtrain, Ttrain = X[trainRows, :], T[trainRows, :]
+Xtest, Ttest = X[testRows, :], T[testRows, :]
+
+
+# In[14]:
+
+
+import pandas as pd
+
+errors = []
+hiddens = [0] + [[nu] * nl for nu in [1, 5, 10, 20, 50] for nl in [1, 2, 3, 4, 5]]
+print('hiddens =', hiddens)
+for hids in hiddens: 
+    nnet = nn2.NeuralNetwork(Xtrain.shape[1], hids, Ttrain.shape[1])
+    nnet.train(Xtrain, Ttrain, 500)
+    errors.append([hids, rmse(Ttrain, nnet.use(Xtrain)), rmse(Ttest, nnet.use(Xtest))])
+errors = pd.DataFrame(errors)
+print(errors)
+
+plt.figure(figsize=(10, 10))
+plt.plot(errors.values[:, 1:], 'o-')
+plt.legend(('Train RMSE', 'Test RMSE'))
+plt.xticks(range(errors.shape[0]), hiddens, rotation=30, horizontalalignment='right')
+plt.grid(True)
+
+
+# In[20]:
+
+
+import pandas as pd
+errors = []
+nIterationsList = [10, 20, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 1000]
+hiddens = [20] 
+
+for hids in nIterationsList: 
+    nnet = nn2.NeuralNetwork(Xtrain.shape[1], hiddens, Ttrain.shape[1])
+    nnet.train(Xtrain, Ttrain, hids)
+    errors.append([hids, rmse(Ttrain, nnet.use(Xtrain)), rmse(Ttest, nnet.use(Xtest))])
+
+errors = pd.DataFrame(errors)
+
+#  ...  insert code here using the code in the previous code block as a guide ...
+
+print(nIterationsList)
+print(errors)
+plt.figure(figsize=(10, 10))
+plt.plot(errors.values[:, 1:], 'o-')
+plt.legend(('Train RMSE', 'Test RMSE'))
+plt.xticks(range(errors.shape[0]), nIterationsList) #, rotation=30, horizontalalignment='right')
+plt.grid(True)
+
 
 # Include the code, output, and graphs like the above examples. Discuss the results.  Investigate and discuss how much the best hidden layer structure and number of training iterations vary when you repeat the runs.
 
