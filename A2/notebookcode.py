@@ -26,11 +26,7 @@
 
 # ## Overview
 
-# The goal of this assignment is to learn about object-oriented programming in python and to gain some experience in comparing different sized neural networks when applied to a data set.
-# 
-# Starting with the ```NeuralNetwork``` class from the lecture notes, you will create one new version of that class, apply it to a data set, and discuss the results.
-
-# ## Modified neuralnetworks class testing
+# This assignment uses the neuralnetworksA2 class and tests if it works, then uses it to show how 
 
 # In[5]:
 
@@ -39,6 +35,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 get_ipython().magic('matplotlib inline')
 
+
+# ## Modified neuralnetworksA2 class testing
+# This section is shows that the neuralnetworkA2 class works, and how it can work on some very simplified data.
 
 # In[8]:
 
@@ -83,10 +82,9 @@ nnet.draw()
 
 
 # ## Neural Network Performance with Different Hidden Layer Structures and Numbers of Training Iterations
+# This section is meant to show that using neuralnetworks, you can find different hidden layers in the data, and that the number of iterations on traing data can change the accuracy of the trained data.
 
 # ### Example with Toy Data
-
-# Using your new ```NeuralNetwork``` class, you can compare the error obtained on a given data set by looping over various hidden layer structures.  Here is an example using the simple toy data from above.
 
 # In[13]:
 
@@ -169,7 +167,7 @@ plt.xticks(range(errors.shape[0]), nIterationsList) #, rotation=30, horizontalal
 plt.grid(True)
 
 
-# ### Experiments wtih Automobile Data
+# ## Experiments wtih Automobile Data
 
 # The following section has:
 # 
@@ -186,8 +184,11 @@ plt.grid(True)
 #   * horsepower
 #   
 # as output variables.
+# 
+# This experiment uses the data found in the UCI machine learning repository. From the site itself:
+# This dataset was taken from the StatLib library which is maintained at Carnegie Mellon University. The dataset was              used in the 1983 American Statistical Association Exposition. 
 
-# In[20]:
+# In[29]:
 
 
 # This is a function which goes through and parses the auto-mpg.data file, and creates an input and target set from the data file
@@ -213,14 +214,14 @@ def makeMPGData(filename='auto-mpg.data'):
     return X,T,Xnames,Tnames
 
 
-# In[21]:
+# In[30]:
 
 
 # This line calls the previous method and stores the values that will be trained
 X,T,Xnames,Tname = makeMPGData()
 
 
-# In[22]:
+# In[31]:
 
 
 # This section tests that the data was read in correctly, and that it can be implemented correctly into a neuralnetwork.
@@ -235,9 +236,9 @@ print(nnet)
 error = np.sqrt(np.mean((T - nnet.use(X))**2))
 
 
-# As can be seen above the neuralnetwork run with the data from the auto-mpg.data file is fast and with an error of approximately .193 after 100 iterations, it is fairly accurate. 
+# As can be seen above the neuralnetwork run with the data from the auto-mpg.data file is reasonably fast and with an error of approximately .183 after 100 iterations, it is fairly accurate. 
 
-# In[26]:
+# In[32]:
 
 
 # This section of code creates a randomized training set from 80 percent of the data given, and holds 20 percent of the data
@@ -275,7 +276,7 @@ plt.xticks(range(errors.shape[0]), hiddens, rotation=30, horizontalalignment='ri
 plt.grid(True)
 
 
-# In[96]:
+# In[37]:
 
 
 import pandas as pd
@@ -289,7 +290,6 @@ for hids in nIterationsList:
     errors.append([hids, rmse(Ttrain, nnet.use(Xtrain)), rmse(Ttest, nnet.use(Xtest))])
 
 errors = pd.DataFrame(errors)
-#  ...  insert code here using the code in the previous code block as a guide ...
 
 print(nIterationsList)
 print(errors)
@@ -300,6 +300,8 @@ plt.xticks(range(errors.shape[0]), nIterationsList) #, rotation=30, horizontalal
 plt.grid(True)
 
 
+# In the original running of finding the best hidden layer, [5,5,5,5] was the best layer, and had the least error. The above graph shows the data run on this hidden layer, even though [20,20,20,20,20] was the best layer in the most recent run, it still seems to be pretty accurate in comparision to the training RMSE. 
+
 # In[8]:
 
 
@@ -309,7 +311,24 @@ plt.subplot(6,10,3)
 nnet.draw()
 
 
-# Include the code, output, and graphs like the above examples. Discuss the results.  Investigate and discuss how much the best hidden layer structure and number of training iterations vary when you repeat the runs.
+# The above mapping shows how there are 4 layers added when using a neuralnetwork and the hidden layer of [5,5,5,5]. It is very interesting to see how the data is used 
+
+# ## Discussion on above training.
+
+# ![image.png](attachment:image.png)
+# This is the auto-mpg.data being run on multiple iterations, and on the most recent best hidden layer [20,20,20,20,20]. with the exception of 400 iterations, and 1000 iterations the training seemed to be fairly accurate. 
+
+# ![image.png](attachment:image.png)
+# This graph is of the best hidden layer found in the data, but the final point shows the data being trained at 100000 iterations on the best layer, [20,20,20,20,20], and although for many of the iterations, the test and the train data is very close, it seems as though having my Neuralnetwork run with 100000 iterations is counter-productive, it seems that this layer eventually causes the data to be done incorrectly after many many iterations. This leads me to believe that there needs to be multi some sort of catch for training data to not be derailed. 
+
+# ![image.png](attachment:image.png)
+# This is an example of the data being trained on a "hidden layer" of [22,8,4,8,22]. This is a random layer that I thought up, and ran on the neural network, it doesn't seem to have worked bad, but it definitely doesn't seem as good as the optimal one found from checking multiple layers against other ones. 
+
+# ![image.png](attachment:image.png)
+# In the above graph, it shows the training data being run on the worst hidden layer [20,20,20]. It does show how the data diverges very quickly and doesn't fully correct itself even with 1000 iterations.
+
+# ![image.png](attachment:image.png)
+# The above image shows with less iterations (only 500), what it looks like to train the worst hidden layer found in the mpg data. It is not a very great example of how a neuralnetwork can train data correctly. From iterations 10-150 the Test and Train data is very similar, but after that it seems that the test and Train data completely diverges.
 
 # ## Grading and Check-in
 
@@ -321,7 +340,7 @@ nnet.draw()
 # 
 # A different, but similar, grading script will be used to grade your checked-in notebook. It will include other tests.
 
-# In[ ]:
+# In[27]:
 
 
 get_ipython().magic('run -i A2grader.py')
