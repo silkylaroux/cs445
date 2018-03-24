@@ -189,6 +189,64 @@ class NeuralNetworkReLU(NeuralNetwork):
     
     def activationDerivative(self, weighted_sum):
         return 1. * (weighted_sum > 0)
+
+class NeuralNetworkClassifier(NeuralNetwork):
+
+    def _multinomialize(self, Y):   # also known as softmax
+        # fix to avoid overflow
+        mx = max(0, np.max(Y))
+        expY = np.exp(Y - mx)
+        denom = np.sum(expY, axis=1).reshape((-1, 1)) + sys.float_info.epsilon
+        return expY / denom
+
+    def _objectiveF(self, w, X, Tindicators):
+        .
+        .
+        .
+        # Convert Y to multinomial distribution. Call result G.
+        #  and return negative of mean log likelihood.
+        # Write the call to np.log as  np.log(G + sys.float_info.epsilon)
+
+
+    def _gradientF(self, w, X, Tindicators):
+        .
+        .
+        .
+        # Convert Y to multinomial distribution. Call result G.
+        # delta calculated as before, except use Tindicators instead of T to
+        #   make error of  Tindicates - G
+        # Also, negate the result.  Why?
+        .
+        .
+        .
+
+    def train(self, X, T, nIterations=100, verbose=False,
+              weightPrecision=0, errorPrecision=0, saveWeightsHistory=False):
+        .
+        .
+        .
+        # Remove T standardization calculations
+        # Assign to Tindicators using ml.makeIndicatorVars
+        # Add   self.classes = np.unique(T)
+        # Pass Tindicators into ml.scg instead of T
+        .
+        .
+        .
+
+    def use(self, X, allOutputs=False):
+        .
+        .
+        .
+        # multinomialize Y, assign to G
+        # Calculate predicted classes by
+        #   picking argmax for each row of G
+        #   and use the results to index into self.classes.
+        .
+        .
+        .
+        return (classes, G, Z[1:]) if allOutputs else classes
+
+    
         
 if __name__ == '__main__':
 

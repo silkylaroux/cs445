@@ -38,7 +38,7 @@
 
 # Define a new function ```partition``` that is used as this example shows.
 
-# In[6]:
+# In[1]:
 
 
 import numpy as np
@@ -49,7 +49,7 @@ X = np.arange(10*2).reshape((10, 2))
 T = X[:, 0:1] * 0.1
 
 
-# In[7]:
+# In[2]:
 
 
 import random
@@ -143,7 +143,7 @@ Ttest
 
 # You will use the ```energydata_complete.csv``` data for the following comparisons.  Load this data using pandas, then create matrix $X$ using all columns except ```['date','Appliances', 'rv1', 'rv2']``` and create $T$ using just ```'Appliances'```.  Write python code that performs the following algorithm.
 
-# In[8]:
+# In[3]:
 
 
 import pandas
@@ -167,7 +167,7 @@ print(X)
 print(T)
 
 
-# In[9]:
+# In[4]:
 
 
 def rmse(A, B):
@@ -183,73 +183,52 @@ def rmse(A, B):
 #               - Calculate two RMS errors, one on the training partition and one on the testing partitions.
 #           - Calculate the mean of the training and testing RMS errors over the 10 repetitions.
 
-# In[10]:
+# In[5]:
 
 
 import neuralnetworksA2 as nn
 
 
-# In[11]:
+# In[9]:
 
 
 def meanFromData(V):
-    meanTrain = V[:,0].mean()
-    meanTest = V[:,1].mean()
-    return meanTrain, meanTest;
+    tanhMeanTrain = V[:,0].mean()
+    tanhMeanTest = V[:,1].mean()
+    reluMeanTrain = V[:,2].mean()
+    reluMeanTest = V[:,3].mean()
+    return tanhMeanTrain, tanhMeanTest,reluMeanTrain,reluMeanTest;
 
 
-# In[ ]:
-
-
-#ReLU activation
-import pandas as pd
-errors = []
-hiddens = [0] + [[nu] * nl for nu in [1,2,5] for nl in [1,2,3]]
-V = np.zeros(shape=(10,2))
-for hids in hiddens:
-    for x in range(10):
-        Xtrain, Ttrain, Xtest, Ttest = partition(X, T, 0.8, shuffle=True)
-        nnet = nn.NeuralNetworkReLU(Xtrain.shape[1], hids, Ttrain.shape[1])
-        nnet.train(Xtrain, Ttrain, 100)
-        #errors.append([rmse(Ttrain, nnet.use(Xtrain)), rmse(Ttest, nnet.use(Xtest))])
-        stack = [rmse(Ttrain, nnet.use(Xtrain)), rmse(Ttest, nnet.use(Xtest))]
-        V = np.vstack([V,stack])
-    meanTrain,meanTest = meanFromData(V)
-    errors.append([hids, meanTrain,meanTest])    
-errors = pd.DataFrame(errors)
-print(errors)
-
-plt.figure(figsize=(10, 10))
-plt.plot(errors.values[:, 1:], 'o-')
-plt.legend(('Train RMSE', 'Test RMSE'))
-plt.xticks(range(errors.shape[0]), hiddens, rotation=30, horizontalalignment='right')
-plt.grid(True)
-
-
-# In[12]:
+# In[10]:
 
 
 #ReLU activation
 import pandas as pd
 errors = []
-hiddens = [0] + [[nu] * nl for nu in [1,2,5] for nl in [1,2,3]]
-V = np.zeros(shape=(1,2))
+hiddens = [0] + [[nu] * nl for nu in [1,2,5,10] for nl in [1,2,3,4]]
+V = np.zeros(shape=(2,4))
 for hids in hiddens:
-    for x in range(1):
+    for x in range(2):
         Xtrain, Ttrain, Xtest, Ttest = partition(X, T, 0.8, shuffle=True)
         nnet = nn.NeuralNetwork(Xtrain.shape[1], hids, Ttrain.shape[1])
         nnet.train(Xtrain, Ttrain, 100)
         stack = [rmse(Ttrain, nnet.use(Xtrain)), rmse(Ttest, nnet.use(Xtest))]
+        
+        nnetrelu = nn.NeuralNetworkReLU(Xtrain.shape[1], hids, Ttrain.shape[1])
+        nnetrelu.train(Xtrain, Ttrain, 100)
+        stack.extend([rmse(Ttrain, nnet.use(Xtrain)), rmse(Ttest, nnet.use(Xtest))])
+        
         V = np.vstack([V,stack])
     
-    meanTrain,meanTest = meanFromData(V)
-    errors.append([hids, meanTrain,meanTest])    
+    tanhMeanTrain,tanhMeanTest,reluMeanTrain,reluMeanTest = meanFromData(V)
+    errors.append([hids, tanhMeanTrain,tanhMeanTest,reluMeanTrain,reluMeanTest])    
 errors = pd.DataFrame(errors)
 print(errors)
 
 plt.figure(figsize=(10, 10))
 plt.plot(errors.values[:, 1:], 'o-')
-plt.legend(('Train RMSE', 'Test RMSE'))
+plt.legend(('tanh Train RMSE','tanh Test RMSE','ReLU Train RMSE', 'ReLU Test RMSE',))
 plt.xticks(range(errors.shape[0]), hiddens, rotation=30, horizontalalignment='right')
 plt.grid(True)
 
@@ -270,7 +249,7 @@ plt.grid(True)
 # 
 # A different, but similar, grading script will be used to grade your checked-in notebook. It will include other tests.
 
-# In[13]:
+# In[2]:
 
 
 get_ipython().magic('run -i A3grader.py')
