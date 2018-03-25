@@ -8,19 +8,18 @@ import time
 class NeuralNetwork:
 
     def __init__(self, ni, nhs, no):
-        if isinstance(nhs, list) or isinstance(nhs, tuple):
-            nihs = [ni] + list(nhs)
+        if not isinstance(nhs, list) and not isinstance(nhs, tuple):
+            nhs = [nhs]
+        if nhs[0] == 0:  # assume nhs[0]==0 and len(nhs)>1 never True
+            nihs = [ni]
+            nhs = []
         else:
-            if nhs > 0:
-                nihs = [ni, nhs]
-                nhs = [nhs]
-            else:
-                nihs = [ni]
-                nhs = []
+            nihs = [ni] + nhs
+
         if len(nihs) > 1:
             self.Vs = [1/np.sqrt(nihs[i]) *
                        np.random.uniform(-1, 1, size=(1+nihs[i], nihs[i+1])) for i in range(len(nihs)-1)]
-            self.W = 1/np.sqrt(nhs[-1]) * np.random.uniform(-1, 1, size=(1+nhs[-1], no))
+            self.W = 1/np.sqrt(nihs[-1]) * np.random.uniform(-1, 1, size=(1+nihs[-1], no))
         else:
             self.Vs = []
             self.W = 1/np.sqrt(ni) * np.random.uniform(-1, 1, size=(1+ni, no))
@@ -200,43 +199,115 @@ class NeuralNetworkClassifier(NeuralNetwork):
         return expY / denom
 
     def _objectiveF(self, w, X, Tindicators):
-        .
-        .
-        .
+        self._unpack(w)
+        # Do forward pass through all layers
+        Zprev = X
+        for i in range(len(self.nhs)):
+            V = self.Vs[i]
+            Zprev = self.activation(Zprev @ V[1:, :] + V[0:1, :])  # handling bias weight without adding column of 1's
+                                                                   # Changed so that this calls activation not np.tanh()
+        Y = Zprev @ self.W[1:, :] + self.W[0:1, :]
+        #return 0.5 * np.mean((T-Y)**2)
+        
+        G = _multinomialize(Y)
+        return np.log(G + sys.float_info.epsilon)
         # Convert Y to multinomial distribution. Call result G.
         #  and return negative of mean log likelihood.
         # Write the call to np.log as  np.log(G + sys.float_info.epsilon)
 
 
     def _gradientF(self, w, X, Tindicators):
-        .
-        .
-        .
+        self._unpack(w)
+        # Do forward pass through all layers
+        Zprev = X
+        Z = [Zprev]
+        for i in range(len(self.nhs)):
+            V = self.Vs[i]
+            Zprev = self.activation(Zprev @ V[1:, :] + V[0:1, :]) # Changed so that this calls activation not np.tanh()
+            Z.append(Zprev)
+        Y = Zprev @ self.W[1:, :] + self.W[0:1, :]
+        
+        G = _multinomialize(Y)
+        
+        # Do backward pass, starting with delta in output layer
+        delta = -(Tindicators - Y) / (X.shape[0] * Tindicators.shape[1])
+        dW = np.vstack((np.ones((1, delta.shape[0])) @ delta, 
+                        Z[-1].T @ delta))
+        dVs = []
+        delta = (self.activationDerivative(Z[-1])) * (delta @ self.W[1:, :].T) # Changed so that this calls activationDerivative()
+        for Zi in range(len(self.nhs), 0, -1):
+            Vi = Zi - 1  # because X is first element of Z
+            dV = np.vstack((np.ones((1, delta.shape[0])) @ delta,
+                            Z[Zi-1].T @ delta))
+            dVs.insert(0, dV)
+            delta = (delta @ self.Vs[Vi][1:, :].T) * (self.activationDerivative(Z[Zi-1])) # Changed so that this calls                                                                                                               # activationDerivative()
+        return self._pack(dVs, dW)
+        
+    
         # Convert Y to multinomial distribution. Call result G.
         # delta calculated as before, except use Tindicators instead of T to
         #   make error of  Tindicates - G
         # Also, negate the result.  Why?
-        .
-        .
-        .
+
 
     def train(self, X, T, nIterations=100, verbose=False,
               weightPrecision=0, errorPrecision=0, saveWeightsHistory=False):
-        .
-        .
-        .
+        if self.Xmeans is None:
+            self.Xmeans = X.mean(axis=0)
+            self.Xstds = X.std(axis=0)
+            self.Xconstant = self.Xstds == 0
+            self.XstdsFixed = copy(self.Xstds)
+            self.XstdsFixed[self.Xconstant] = 1
+        X = self._standardizeX(X)
+
+        if T.ndim == 1:
+            T = T.reshape((-1, 1))
+
+        if self.Tmeans is None:
+            self.Tmeans = T.mean(axis=0)
+            self.Tstds = T.std(axis=0)
+            self.Tconstant = self.Tstds == 0
+            self.TstdsFixed = copy(self.Tstds)
+            self.TstdsFixed[self.Tconstant] = 1
+        #T = self._standardizeT(T)
+
+        startTime = time.time()
+
+        scgresult = ml.scg(self._pack(self.Vs, self.W),
+                            self._objectiveF, self._gradientF,
+                            X, Tindicators,
+                            xPrecision=weightPrecision,
+                            fPrecision=errorPrecision,
+                            nIterations=nIterations,
+                            verbose=verbose,
+                            ftracep=True,
+                            xtracep=saveWeightsHistory)
+
+        self._unpack(scgresult['x'])
+        self.reason = scgresult['reason']
+        self.errorTrace = np.sqrt(scgresult['ftrace']) # * self.Tstds # to _unstandardize the MSEs
+        self.numberOfIterations = len(self.errorTrace)
+        self.trained = True
+        self.weightsHistory = scgresult['xtrace'] if saveWeightsHistory else None
+        self.trainingTime = time.time() - startTime
+        return self
         # Remove T standardization calculations
         # Assign to Tindicators using ml.makeIndicatorVars
         # Add   self.classes = np.unique(T)
         # Pass Tindicators into ml.scg instead of T
-        .
-        .
-        .
+
 
     def use(self, X, allOutputs=False):
-        .
-        .
-        .
+        Zprev = self._standardizeX(X)
+        Z = [Zprev]
+        for i in range(len(self.nhs)):
+            V = self.Vs[i]
+            Zprev = self.activation(Zprev @ V[1:, :] + V[0:1, :]) # Changed so that this calls activation not np.tanh()
+            Z.append(Zprev)
+        Y = Zprev @ self.W[1:, :] + self.W[0:1, :]
+        Y = self._unstandardizeT(Y)
+        #return (Y, Z[1:]) if allOutputs else Y
+    
         # multinomialize Y, assign to G
         # Calculate predicted classes by
         #   picking argmax for each row of G

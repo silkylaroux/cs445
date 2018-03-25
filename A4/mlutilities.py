@@ -23,12 +23,44 @@ import sys
 from math import sqrt, ceil
 floatPrecision = sys.float_info.epsilon
 
+def confusionMatrix(actual, predicted, classes):
+    nc = len(classes)
+    confmat = np.zeros((nc, nc)) 
+    for ri in range(nc):
+        trues = (actual==classes[ri]).squeeze()
+        predictedThisClass = predicted[trues]
+        keep = trues
+        predictedThisClassAboveThreshold = predictedThisClass
+        # print 'confusionMatrix: sum(trues) is ', np.sum(trues),'for classes[ri]',classes[ri]
+        for ci in range(nc):
+            confmat[ri,ci] = np.sum(predictedThisClassAboveThreshold == classes[ci]) / float(np.sum(keep))
+    printConfusionMatrix(confmat,classes)
+    return confmat
+
+######################################################################
+def printConfusionMatrix(confmat,classes):
+    print('   ',end='')
+    for i in classes:
+        print('%5d' % (i), end='')
+    print('\n    ',end='')
+    print('{:s}'.format('------'*len(classes)))
+    for i,t in enumerate(classes):
+        print('{:2d} |'.format(t), end='')
+        for i1,t1 in enumerate(classes):
+            if confmat[i,i1] == 0:
+                print('  0  ',end='')
+            else:
+                print('{:5.1f}'.format(100*confmat[i,i1]), end='')
+        print()
+        
+######################################################################
 def makeIndicatorVars(T):
     # Make sure T is two-dimensiona. Should be nSamples x 1.
     if T.ndim == 1:
         T = T.reshape((-1,1))    
     return (T == np.unique(T)).astype(int)
 
+######################################################################
 def trainValidateTestKFolds(trainf, evaluatef, X, T, parameterSets, nFolds=5,
                             shuffle=False, verbose=False):
     # Randomly arrange row indices
