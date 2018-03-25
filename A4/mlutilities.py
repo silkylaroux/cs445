@@ -348,7 +348,7 @@ def scg(x, f, gradf, *fargs, **params):
 
     if ftracep:
         ftrace = np.zeros(nIterations+1)
-        ftrace[0] = fold
+        #ftrace[0] = fold
     else:
         ftrace = None
         
@@ -387,7 +387,7 @@ def scg(x, f, gradf, *fargs, **params):
         Delta = 2 * (fnew - fold) / (alpha*mu)
         # if np.isnan(Delta):
         #     pdb.set_trace()
-        if not np.isnan(Delta) and Delta  >= 0:
+        if not np.isnan(Delta) and Delta.any() >= 0:
             success = True
             nsuccess += 1
             x = xnew

@@ -1,4 +1,5 @@
 import numpy as np
+import sys
 import mlutilities as ml
 import matplotlib.pyplot as plt
 from copy import copy
@@ -142,7 +143,7 @@ class NeuralNetwork:
 
         self._unpack(scgresult['x'])
         self.reason = scgresult['reason']
-        self.errorTrace = np.sqrt(scgresult['ftrace']) # * self.Tstds # to _unstandardize the MSEs
+        #self.errorTrace = np.sqrt(scgresult['ftrace']) # * self.Tstds # to _unstandardize the MSEs
         self.numberOfIterations = len(self.errorTrace)
         self.trained = True
         self.weightsHistory = scgresult['xtrace'] if saveWeightsHistory else None
@@ -180,6 +181,13 @@ class NeuralNetwork:
 
     def draw(self, inputNames=None, outputNames=None, gray=False):
         ml.draw(self.Vs, self.W, inputNames, outputNames, gray)
+
+    def _multinomialize(self, Y):   # also known as softmax
+        # fix to avoid overflow
+        mx = max(0, np.max(Y))
+        expY = np.exp(Y - mx)
+        denom = np.sum(expY, axis=1).reshape((-1, 1)) + sys.float_info.epsilon
+        return expY / denom
         
 class NeuralNetworkReLU(NeuralNetwork):
     
@@ -209,7 +217,7 @@ class NeuralNetworkClassifier(NeuralNetwork):
         Y = Zprev @ self.W[1:, :] + self.W[0:1, :]
         #return 0.5 * np.mean((T-Y)**2)
         
-        G = _multinomialize(Y)
+        G = self._multinomialize(Y)
         return np.log(G + sys.float_info.epsilon)
         # Convert Y to multinomial distribution. Call result G.
         #  and return negative of mean log likelihood.
@@ -227,7 +235,7 @@ class NeuralNetworkClassifier(NeuralNetwork):
             Z.append(Zprev)
         Y = Zprev @ self.W[1:, :] + self.W[0:1, :]
         
-        G = _multinomialize(Y)
+        G = self._multinomialize(Y)
         
         # Do backward pass, starting with delta in output layer
         delta = -(Tindicators - Y) / (X.shape[0] * Tindicators.shape[1])
@@ -249,52 +257,7 @@ class NeuralNetworkClassifier(NeuralNetwork):
         #   make error of  Tindicates - G
         # Also, negate the result.  Why?
 
-
-    def train(self, X, T, nIterations=100, verbose=False,
-              weightPrecision=0, errorPrecision=0, saveWeightsHistory=False):
-        if self.Xmeans is None:
-            self.Xmeans = X.mean(axis=0)
-            self.Xstds = X.std(axis=0)
-            self.Xconstant = self.Xstds == 0
-            self.XstdsFixed = copy(self.Xstds)
-            self.XstdsFixed[self.Xconstant] = 1
-        X = self._standardizeX(X)
-
-        if T.ndim == 1:
-            T = T.reshape((-1, 1))
-
-        if self.Tmeans is None:
-            self.Tmeans = T.mean(axis=0)
-            self.Tstds = T.std(axis=0)
-            self.Tconstant = self.Tstds == 0
-            self.TstdsFixed = copy(self.Tstds)
-            self.TstdsFixed[self.Tconstant] = 1
-        #T = self._standardizeT(T)
-
-        startTime = time.time()
-
-        scgresult = ml.scg(self._pack(self.Vs, self.W),
-                            self._objectiveF, self._gradientF,
-                            X, Tindicators,
-                            xPrecision=weightPrecision,
-                            fPrecision=errorPrecision,
-                            nIterations=nIterations,
-                            verbose=verbose,
-                            ftracep=True,
-                            xtracep=saveWeightsHistory)
-
-        self._unpack(scgresult['x'])
-        self.reason = scgresult['reason']
-        self.errorTrace = np.sqrt(scgresult['ftrace']) # * self.Tstds # to _unstandardize the MSEs
-        self.numberOfIterations = len(self.errorTrace)
-        self.trained = True
-        self.weightsHistory = scgresult['xtrace'] if saveWeightsHistory else None
-        self.trainingTime = time.time() - startTime
-        return self
-        # Remove T standardization calculations
-        # Assign to Tindicators using ml.makeIndicatorVars
-        # Add   self.classes = np.unique(T)
-        # Pass Tindicators into ml.scg instead of T
+    
 
 
     def use(self, X, allOutputs=False):
@@ -307,14 +270,13 @@ class NeuralNetworkClassifier(NeuralNetwork):
         Y = Zprev @ self.W[1:, :] + self.W[0:1, :]
         Y = self._unstandardizeT(Y)
         #return (Y, Z[1:]) if allOutputs else Y
-    
+        G = self._multinomialize(Y)
+        
         # multinomialize Y, assign to G
         # Calculate predicted classes by
         #   picking argmax for each row of G
         #   and use the results to index into self.classes.
-        .
-        .
-        .
+        self.classes[np.argmax( discriminants, axis=1 )]
         return (classes, G, Z[1:]) if allOutputs else classes
 
     
