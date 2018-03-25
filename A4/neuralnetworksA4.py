@@ -205,7 +205,13 @@ class NeuralNetworkClassifier(NeuralNetwork):
         expY = np.exp(Y - mx)
         denom = np.sum(expY, axis=1).reshape((-1, 1)) + sys.float_info.epsilon
         return expY / denom
-
+    
+    def loglikelihood(warg,K):
+        w = warg.reshape((-1,K))
+        Y = g(Xtrains1,w)
+        # print(w)
+        return - np.mean(TtrainI*np.log(Y))
+    
     def _objectiveF(self, w, X, Tindicators):
         self._unpack(w)
         # Do forward pass through all layers
@@ -218,12 +224,13 @@ class NeuralNetworkClassifier(NeuralNetwork):
         #return 0.5 * np.mean((T-Y)**2)
         
         G = self._multinomialize(Y)
-        return np.log(G + sys.float_info.epsilon)
+        return np.log((G + sys.float_info.epsilon))
         # Convert Y to multinomial distribution. Call result G.
         #  and return negative of mean log likelihood.
         # Write the call to np.log as  np.log(G + sys.float_info.epsilon)
-
-
+    def catchNegative(x):
+        return x if x > 0 else sys.float_info.epsilon
+    
     def _gradientF(self, w, X, Tindicators):
         self._unpack(w)
         # Do forward pass through all layers
@@ -278,6 +285,48 @@ class NeuralNetworkClassifier(NeuralNetwork):
         #   and use the results to index into self.classes.
         self.classes[np.argmax( discriminants, axis=1 )]
         return (classes, G, Z[1:]) if allOutputs else classes
+    
+    def train(self, X, T, nIterations=100, verbose=False,
+              weightPrecision=0, errorPrecision=0, saveWeightsHistory=False):
+        
+        if self.Xmeans is None:
+            self.Xmeans = X.mean(axis=0)
+            self.Xstds = X.std(axis=0)
+            self.Xconstant = self.Xstds == 0
+            self.XstdsFixed = copy(self.Xstds)
+            self.XstdsFixed[self.Xconstant] = 1
+        #X = self._standardizeX(X)
+
+        if T.ndim == 1:
+            T = T.reshape((-1, 1))
+
+        startTime = time.time()
+        Tindicators = ml.makeIndicatorVars(T)
+
+        scgresult = ml.scg(self._pack(self.Vs, self.W),
+                            self._objectiveF, self._gradientF,
+                            X, Tindicators,
+                            xPrecision=weightPrecision,
+                            fPrecision=errorPrecision,
+                            nIterations=nIterations,
+                            verbose=verbose,
+                            ftracep=True,
+                            xtracep=saveWeightsHistory)
+        
+        self.classes = np.unique(T)
+        self._unpack(scgresult['x'])
+        self.reason = scgresult['reason']
+        #self.errorTrace = np.sqrt(scgresult['ftrace']) # * self.Tstds # to _unstandardize the MSEs
+        self.numberOfIterations = len(self.errorTrace)
+        self.trained = True
+        self.weightsHistory = scgresult['xtrace'] if saveWeightsHistory else None
+        self.trainingTime = time.time() - startTime
+        
+        # Remove T standardization calculations
+        # Assign to Tindicators using ml.makeIndicatorVars
+        # Add   self.classes = np.unique(T)
+        # Pass Tindicators into ml.scg instead of T
+        return self
 
     
         

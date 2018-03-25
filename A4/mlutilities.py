@@ -20,8 +20,39 @@ import matplotlib.patches as pltpatch  # for Arc
 import matplotlib.collections as pltcoll
 import pandas as pd
 import sys
+import random
 from math import sqrt, ceil
 floatPrecision = sys.float_info.epsilon
+
+def partition(X, T, seeding,shuffle = False,classification = False):
+    X.astype(float)
+    nRows = X.shape[0]
+    rows = np.arange(nRows)
+    
+    if(shuffle):
+        np.random.shuffle(rows)
+    if(not classification):
+        trainf = 0.8
+        healthyI,_ = np.where(T == 0)
+        parkI,_ = np.where(T == 1)
+        healthyI = np.random.permutation(healthyI)
+        parkI = np.random.permutation(parkI)
+
+        nHealthy = round(trainf * len(healthyI))
+        nPark = round(trainf * len(parkI))
+        rowsTrain = np.hstack((healthyI[:nHealthy], parkI[:nPark]))
+        Xtrain = X[rowsTrain,:]
+        Ttrain = T[rowsTrain,:]
+        rowsTest = np.hstack((healthyI[nHealthy:], parkI[nPark:]))
+        Xtest =  X[rowsTest,:]
+        Ttest =  T[rowsTest,:]
+    else:
+        nTrain = int(nRows * seeding)
+        trainRows = rows[:nTrain]
+        testRows = rows[nTrain:]
+        Xtrain, Ttrain = X[trainRows, :], T[trainRows, :]
+        Xtest, Ttest = X[testRows, :], T[testRows, :]
+    return Xtrain, Ttrain, Xtest, Ttest
 
 def confusionMatrix(actual, predicted, classes):
     nc = len(classes)
@@ -348,7 +379,7 @@ def scg(x, f, gradf, *fargs, **params):
 
     if ftracep:
         ftrace = np.zeros(nIterations+1)
-        #ftrace[0] = fold
+        ftrace[0] = fold
     else:
         ftrace = None
         
@@ -387,7 +418,7 @@ def scg(x, f, gradf, *fargs, **params):
         Delta = 2 * (fnew - fold) / (alpha*mu)
         # if np.isnan(Delta):
         #     pdb.set_trace()
-        if not np.isnan(Delta) and Delta.any() >= 0:
+        if not np.isnan(Delta).all and Delta  >= 0:
             success = True
             nsuccess += 1
             x = xnew
