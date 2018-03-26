@@ -212,6 +212,14 @@ class NeuralNetworkClassifier(NeuralNetwork):
         # print(w)
         return - np.mean(TtrainI*np.log(Y))
     
+    def g(X,w):
+        fs = np.exp(np.dot(X, w))  # N x K
+        denom = np.sum(fs,axis=1).reshape((-1,1))
+        # pdb.set_trace()
+        gs = fs / denom
+        # print(gs[:10,:])
+        return gs
+    
     def _objectiveF(self, w, X, Tindicators):
         self._unpack(w)
         # Do forward pass through all layers
@@ -224,7 +232,9 @@ class NeuralNetworkClassifier(NeuralNetwork):
         #return 0.5 * np.mean((T-Y)**2)
         
         G = self._multinomialize(Y)
-        return np.log((G + sys.float_info.epsilon))
+        return -np.mean(Tindicators.T @ np.log(G + sys.float_info.epsilon))
+
+        #return np.log((G + sys.float_info.epsilon))
         # Convert Y to multinomial distribution. Call result G.
         #  and return negative of mean log likelihood.
         # Write the call to np.log as  np.log(G + sys.float_info.epsilon)
@@ -275,7 +285,7 @@ class NeuralNetworkClassifier(NeuralNetwork):
             Zprev = self.activation(Zprev @ V[1:, :] + V[0:1, :]) # Changed so that this calls activation not np.tanh()
             Z.append(Zprev)
         Y = Zprev @ self.W[1:, :] + self.W[0:1, :]
-        Y = self._unstandardizeT(Y)
+        #Y = self._unstandardizeT(Y)
         #return (Y, Z[1:]) if allOutputs else Y
         G = self._multinomialize(Y)
         
@@ -283,8 +293,9 @@ class NeuralNetworkClassifier(NeuralNetwork):
         # Calculate predicted classes by
         #   picking argmax for each row of G
         #   and use the results to index into self.classes.
-        self.classes[np.argmax( discriminants, axis=1 )]
-        return (classes, G, Z[1:]) if allOutputs else classes
+        tempclass = [np.argmax( G, axis=1 )]
+        self.classes = np.vstack(tempclass)
+        return (self.classes, G, Z[1:]) if allOutputs else self.classes
     
     def train(self, X, T, nIterations=100, verbose=False,
               weightPrecision=0, errorPrecision=0, saveWeightsHistory=False):
@@ -295,10 +306,17 @@ class NeuralNetworkClassifier(NeuralNetwork):
             self.Xconstant = self.Xstds == 0
             self.XstdsFixed = copy(self.Xstds)
             self.XstdsFixed[self.Xconstant] = 1
-        #X = self._standardizeX(X)
-
+        X = self._standardizeX(X)
+        
         if T.ndim == 1:
             T = T.reshape((-1, 1))
+
+        if self.Tmeans is None:
+            self.Tmeans = T.mean(axis=0)
+            #self.Tstds = T.std(axis=0)
+            #self.Tconstant = self.Tstds == 0
+            #self.TstdsFixed = copy(self.Tstds)
+            #self.TstdsFixed[self.Tconstant] = 1
 
         startTime = time.time()
         Tindicators = ml.makeIndicatorVars(T)
@@ -316,7 +334,8 @@ class NeuralNetworkClassifier(NeuralNetwork):
         self.classes = np.unique(T)
         self._unpack(scgresult['x'])
         self.reason = scgresult['reason']
-        #self.errorTrace = np.sqrt(scgresult['ftrace']) # * self.Tstds # to _unstandardize the MSEs
+        self.errorTrace = scgresult['ftrace'] 
+        # * self.Tstds # to _unstandardize the MSEs
         self.numberOfIterations = len(self.errorTrace)
         self.trained = True
         self.weightsHistory = scgresult['xtrace'] if saveWeightsHistory else None

@@ -31,8 +31,8 @@ def partition(X, T, seeding,shuffle = False,classification = False):
     
     if(shuffle):
         np.random.shuffle(rows)
-    if(not classification):
-        trainf = 0.8
+    if(classification):
+        trainf = seeding
         healthyI,_ = np.where(T == 0)
         parkI,_ = np.where(T == 1)
         healthyI = np.random.permutation(healthyI)
