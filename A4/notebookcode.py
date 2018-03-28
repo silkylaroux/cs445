@@ -41,102 +41,78 @@ import numpy as np
 import neuralnetworksA4 as nn
 
 
-# In[6]:
+# In[2]:
 
 
 X = np.arange(10).reshape((-1, 1))
-T = np.array([1]*5 + [2]*5).reshape((-1, 1))
+T = np.array([1]*5 + [2]*5)
 
 
-# In[16]:
+# In[3]:
 
 
 netc = nn.NeuralNetworkClassifier(X.shape[1], [5, 5], len(np.unique(T)))
 netc.train(X, T, 20)
 print(netc)
+
+
+# In[4]:
+
+
+
 print('T, Predicted')
-print(T)
-print(netc.use(X))
-print(np.hstack((T, netc.use(X).reshape(-1,1))))
+#print(T)
+#print(netc.use(X))
+print(np.hstack((T.reshape(-1,1), netc.use(X))))
 
 
 # ## Addition to ```partition``` function
 
 # Add the keyword parameter ```classification``` with a default value of ```False``` to your ```partition``` function.  When its value is set to ```True``` your ```partition``` function must perform a stratified partitioning as illustrated in lecture notes [12 Introduction to Classification](http://nbviewer.ipython.org/url/www.cs.colostate.edu/~anderson/cs445/notebooks/12%20Introduction%20to%20Classification.ipynb)     
 
-# In[17]:
+# In[5]:
+
+
+print(X)
+print(T)
+
+
+# In[5]:
 
 
 import mlutilities as ml
-Xtrain, Ttrain, Xtest, Ttest = ml.partition(X, T, 0.6, classification=True)
+Xtrain, Ttrain, Xtest, Ttest = ml.partition(X, T.reshape(-1,1), 0.6, classification=True)
 
 
-# In[18]:
+# In[ ]:
 
 
 Xtrain
 
 
-# In[19]:
+# In[ ]:
 
 
 Ttrain
 
 
-# In[20]:
+# In[ ]:
 
 
 Xtest
 
 
-# In[21]:
+# In[ ]:
 
 
 Ttest
-
-
-# ## Printing a confusion matrix
-
-# Add these two functions to your ```mlutilities.py``` file.
-
-# In[22]:
-
-
-def confusionMatrix(actual, predicted, classes):
-    nc = len(classes)
-    confmat = np.zeros((nc, nc)) 
-    for ri in range(nc):
-        trues = (actual==classes[ri]).squeeze()
-        predictedThisClass = predicted[trues]
-        keep = trues
-        predictedThisClassAboveThreshold = predictedThisClass
-        # print 'confusionMatrix: sum(trues) is ', np.sum(trues),'for classes[ri]',classes[ri]
-        for ci in range(nc):
-            confmat[ri,ci] = np.sum(predictedThisClassAboveThreshold == classes[ci]) / float(np.sum(keep))
-    printConfusionMatrix(confmat,classes)
-    return confmat
-
-def printConfusionMatrix(confmat,classes):
-    print('   ',end='')
-    for i in classes:
-        print('%5d' % (i), end='')
-    print('\n    ',end='')
-    print('{:s}'.format('------'*len(classes)))
-    for i,t in enumerate(classes):
-        print('{:2d} |'.format(t), end='')
-        for i1,t1 in enumerate(classes):
-            if confmat[i,i1] == 0:
-                print('  0  ',end='')
-            else:
-                print('{:5.1f}'.format(100*confmat[i,i1]), end='')
-        print()
 
 
 # ### Example with toy data
 
 # Use the above data to compare QDA, LDA, and linear and nonlinear logistic regression.
 
-# In[23]:
+# In[6]:
 
 
 import qdalda
@@ -146,31 +122,31 @@ Ytrain = qda.use(Xtrain)
 Ytest = qda.use(Xtest)
 
 
-# In[24]:
+# In[7]:
 
 
 print(np.hstack((Ttrain, Ytrain)))
 
 
-# In[26]:
+# In[8]:
 
 
 np.sum(Ttrain == Ytrain) / len(Ttrain) * 100
 
 
-# In[27]:
+# In[9]:
 
 
 print(np.hstack((Ttest, Ytest)))
 
 
-# In[28]:
+# In[10]:
 
 
 np.sum(Ttest == Ytest) / len(Ttest) * 100
 
 
-# In[29]:
+# In[11]:
 
 
 lda = qdalda.LDA()
@@ -179,43 +155,43 @@ Ytrain = lda.use(Xtrain)
 Ytest = lda.use(Xtest)
 
 
-# In[30]:
+# In[12]:
 
 
 print(np.hstack((Ttrain, Ytrain)))
 
 
-# In[14]:
+# In[13]:
 
 
 print(np.hstack((Ttest, Ytest)))
 
 
-# In[31]:
+# In[14]:
 
 
 np.sum(Ttrain == Ytrain) / len(Ttrain) * 100
 
 
-# In[32]:
+# In[15]:
 
 
 np.sum(Ttest == Ytest) / len(Ttest) * 100
 
 
-# In[33]:
+# In[16]:
 
 
 ml.confusionMatrix(Ttrain, Ytrain, [1, 2]);
 
 
-# In[34]:
+# In[17]:
 
 
 ml.confusionMatrix(Ttest, Ytest, [1, 2]);
 
 
-# In[35]:
+# In[34]:
 
 
 netc = nn.NeuralNetworkClassifier(X.shape[1], [5, 5], len(np.unique(T)))
@@ -226,45 +202,46 @@ Ytrain = netc.use(Xtrain)
 Ytest = netc.use(Xtest)
 
 
+# In[35]:
+
+
+print((Ttrain.shape,Ytrain.reshape(-1,1).shape))
+print(np.hstack((Ttrain, Ytrain.reshape(-1,1))))
+
+
+# In[36]:
+
+
+print(np.hstack((Ttest, Ytest.reshape(-1,1))))
+
+
 # In[37]:
 
 
-print(np.hstack((Ttrain, Ytrain)))
+np.sum(Ttrain == Ytrain.reshape(-1,1)) / len(Ttrain) * 100
 
 
 # In[38]:
 
 
-print(np.hstack((Ttest, Ytest)))
+np.sum(Ttest == Ytest.reshape(-1,1)) / len(Ttest) * 100
 
 
-# In[39]:
+# In[23]:
 
 
-np.sum(Ttrain == Ytrain) / len(Ttrain) * 100
+ml.confusionMatrix(Ttrain, Ytrain.reshape(-1,1), [1, 2]);
 
 
-# In[40]:
+# In[24]:
 
 
-np.sum(Ttest == Ytest) / len(Ttest) * 100
-
-
-# In[41]:
-
-
-ml.confusionMatrix(Ttrain, Ytrain, [1, 2]);
-
-
-# In[11]:
-
-
-ml.confusionMatrix(Ttest, Ytest, [1, 2]);
+ml.confusionMatrix(Ttest, Ytest.reshape(-1,1), [1, 2]);
 
 
 # Remember that linear logistic regression can be applied by specifying 0 hidden units.
 
-# In[42]:
+# In[25]:
 
 
 netc = nn.NeuralNetworkClassifier(X.shape[1], 0, len(np.unique(T)))
@@ -275,16 +252,16 @@ Ytrain = netc.use(Xtrain)
 Ytest = netc.use(Xtest)
 
 
+# In[26]:
+
+
+ml.confusionMatrix(Ttrain, Ytrain.reshape(-1,1), [1, 2]);
+
+
 # In[27]:
 
 
-ml.confusionMatrix(Ttrain, Ytrain, [1, 2]);
-
-
-# In[43]:
-
-
-ml.confusionMatrix(Ttest, Ytest, [1, 2]);
+ml.confusionMatrix(Ttest, Ytest.reshape(-1,1), [1, 2]);
 
 
 # ## Apply to data from orthopedic patients
@@ -295,7 +272,57 @@ ml.confusionMatrix(Ttest, Ytest, [1, 2]);
 # 
 # Print percents of training and testing samples correctly classified by QDA, LDA and various neural network classifiers.  Also print confusion matrices for training and for testing samples for each classifier.  Discuss the relative performance of your classifiers.
 
-# In[50]:
+# In[2]:
+
+
+import pandas
+import numpy as np
+import mlutilities as ml
+
+f = open('column_3C_weka.csv',"r")
+header = f.readline()
+names = header.strip().split(',')[1:]
+#print(names)
+data1 = np.loadtxt(f ,delimiter=',', usecols=1+np.arange(5))
+
+targetColumn = names.index("class")
+XColumns = np.arange(4)
+#XColumns = np.delete(XColumns, targetColumn)
+X2 = data1[XColumns]
+T2 = np.array(data1[5:7]).reshape((-1, 1)) # to keep 2-d matrix form
+names.remove("class")
+
+#print(X2)
+#print(T2)
+
+# Reading in file via pandas, and putting values into T(target) and X(inputs)
+data = pandas.read_csv('column_3C_weka.csv')
+T = data[['class']]
+T = np.array(T)
+X = data.drop(['class'], axis=1)
+X = np.array(X)
+
+#print(X)
+#print(T)
+
+# Getting labels for T and X
+names = data.keys()
+Xnames = names[3:27]
+Tnames = names[0:2]
+Xnames = Xnames.insert(0, 'bias')
+Xtrain, Ttrain, Xtest, Ttest = ml.partition(X, T, 0.8, classification=True, shuffle=True)
+#Xtrain, Ttrain, Xtest, Ttest = ml.partition(X2, T2, 0.8, classification=True, shuffle=False)
+
+print(Xtrain)
+print(Ttrain)
+
+import neuralnetworksA4 as nn
+nnet = nn.NeuralNetworkClassifier(Xtrain.shape[0], [5,5], Ttrain.shape[1])
+#print(nnet)
+nnet.train(Xtrain.T, Ttrain, 200)
+
+
+# In[1]:
 
 
 import numpy as np
@@ -305,23 +332,56 @@ T = np.array([1]*8 + [2]*8 + [3]*4).reshape((-1, 1))
 Xtrain, Ttrain, Xtest, Ttest = ml.partition(X, T, 0.8, classification=True, shuffle=False)
 
 
-# In[51]:
+# In[ ]:
+
+
+T
+
+
+# In[4]:
 
 
 X
 
 
-# In[52]:
+# In[5]:
 
 
 Xtrain
+
+
+# In[4]:
+
+
+nnet.getErrors()[-1]
+
+
+# In[3]:
+
+
+import neuralnetworksA4 as nn
+nnet = nn.NeuralNetworkClassifier(2, [5, 5], 3)
+nnet.train(Xtrain, Ttrain, 200)
+Ytest = nnet.use(Xtest)
+fractionCorrect = np.sum(Ytest == Ttest) / len(Ttest)
+print((Ytest.shape,Ttest.shape))
+print(fractionCorrect)
+
+
+# In[5]:
+
+
+Ytest = nnet.use(Xtest)
+fractionCorrect = (np.sum(Ytest == Ttest) / len(Ttest))
+print((Ytest,Ttest))
+print(fractionCorrect)
 
 
 # ## Grading and Check-in
 
 # Your notebook will be run and graded automatically. Test this grading process by first downloading [A4grader.tar](https://www.cs.colostate.edu/~anderson/cs445/notebooks/A4grader.tar) and extract A4grader.py from it.   
 
-# In[53]:
+# In[ ]:
 
 
 get_ipython().magic('run -i A4grader.py')

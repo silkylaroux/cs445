@@ -229,10 +229,12 @@ class NeuralNetworkClassifier(NeuralNetwork):
             Zprev = self.activation(Zprev @ V[1:, :] + V[0:1, :])  # handling bias weight without adding column of 1's
                                                                    # Changed so that this calls activation not np.tanh()
         Y = Zprev @ self.W[1:, :] + self.W[0:1, :]
+        #Y = self.g(X[0:],w);
         #return 0.5 * np.mean((T-Y)**2)
         
         G = self._multinomialize(Y)
-        return -np.mean(Tindicators.T @ np.log(G + sys.float_info.epsilon))
+        #print(("tind",Tindicators,"g",G,"ep",np.log(G + sys.float_info.epsilon)))
+        return -np.mean(Tindicators * np.log(G + sys.float_info.epsilon))
 
         #return np.log((G + sys.float_info.epsilon))
         # Convert Y to multinomial distribution. Call result G.
@@ -251,11 +253,14 @@ class NeuralNetworkClassifier(NeuralNetwork):
             Zprev = self.activation(Zprev @ V[1:, :] + V[0:1, :]) # Changed so that this calls activation not np.tanh()
             Z.append(Zprev)
         Y = Zprev @ self.W[1:, :] + self.W[0:1, :]
+        #print(Y)
         
         G = self._multinomialize(Y)
         
         # Do backward pass, starting with delta in output layer
-        delta = -(Tindicators - Y) / (X.shape[0] * Tindicators.shape[1])
+        #print(Tindicators, G)
+        delta = -(Tindicators - G) / (X.shape[0] * G.shape[1])
+        #print(("delt",delta))
         dW = np.vstack((np.ones((1, delta.shape[0])) @ delta, 
                         Z[-1].T @ delta))
         dVs = []
@@ -266,6 +271,7 @@ class NeuralNetworkClassifier(NeuralNetwork):
                             Z[Zi-1].T @ delta))
             dVs.insert(0, dV)
             delta = (delta @ self.Vs[Vi][1:, :].T) * (self.activationDerivative(Z[Zi-1])) # Changed so that this calls                                                                                                               # activationDerivative()
+        #print(dVs,dW)
         return self._pack(dVs, dW)
         
     
@@ -278,6 +284,7 @@ class NeuralNetworkClassifier(NeuralNetwork):
 
 
     def use(self, X, allOutputs=False):
+        
         Zprev = self._standardizeX(X)
         Z = [Zprev]
         for i in range(len(self.nhs)):
@@ -287,14 +294,22 @@ class NeuralNetworkClassifier(NeuralNetwork):
         Y = Zprev @ self.W[1:, :] + self.W[0:1, :]
         #Y = self._unstandardizeT(Y)
         #return (Y, Z[1:]) if allOutputs else Y
-        G = self._multinomialize(Y)
         
+        G = self._multinomialize(Y)
+        #print(Y)
+        #print(np.argmax(Y))
+        #print(self.classes[G])
+        #print(("y",Y,"g",G))
         # multinomialize Y, assign to G
         # Calculate predicted classes by
         #   picking argmax for each row of G
         #   and use the results to index into self.classes.
-        tempclass = [np.argmax( G, axis=1 )]
-        self.classes = np.vstack(tempclass)
+        #print([np.argmax(G,axis = 1)])
+        tempclass = np.argmax( G, axis=1 ).reshape(-1,1)
+        
+        #print(("tc",tempclass))
+        #print(("classes",self.classes,"other",self.classes[np.array(tempclass)]))
+        self.classes= tempclass
         return (self.classes, G, Z[1:]) if allOutputs else self.classes
     
     def train(self, X, T, nIterations=100, verbose=False,
@@ -307,12 +322,12 @@ class NeuralNetworkClassifier(NeuralNetwork):
             self.XstdsFixed = copy(self.Xstds)
             self.XstdsFixed[self.Xconstant] = 1
         X = self._standardizeX(X)
-        
-        if T.ndim == 1:
-            T = T.reshape((-1, 1))
+        T = T.reshape((-1, 1))
+        #if T.ndim == 1:
+            #T = T.reshape((-1, 1))
 
-        if self.Tmeans is None:
-            self.Tmeans = T.mean(axis=0)
+        #if self.Tmeans is None:
+            #self.Tmeans = T.mean(axis=0)
             #self.Tstds = T.std(axis=0)
             #self.Tconstant = self.Tstds == 0
             #self.TstdsFixed = copy(self.Tstds)
@@ -320,7 +335,8 @@ class NeuralNetworkClassifier(NeuralNetwork):
 
         startTime = time.time()
         Tindicators = ml.makeIndicatorVars(T)
-
+        #print(Tindicators)
+        self.classes = np.unique(T).reshape(-1,1)
         scgresult = ml.scg(self._pack(self.Vs, self.W),
                             self._objectiveF, self._gradientF,
                             X, Tindicators,
@@ -331,7 +347,7 @@ class NeuralNetworkClassifier(NeuralNetwork):
                             ftracep=True,
                             xtracep=saveWeightsHistory)
         
-        self.classes = np.unique(T)
+        
         self._unpack(scgresult['x'])
         self.reason = scgresult['reason']
         self.errorTrace = scgresult['ftrace'] 

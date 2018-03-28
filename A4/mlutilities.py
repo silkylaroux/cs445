@@ -33,19 +33,102 @@ def partition(X, T, seeding,shuffle = False,classification = False):
         np.random.shuffle(rows)
     if(classification):
         trainf = seeding
-        healthyI,_ = np.where(T == 0)
-        parkI,_ = np.where(T == 1)
-        healthyI = np.random.permutation(healthyI)
-        parkI = np.random.permutation(parkI)
+        #print(T)
+        if 'Hernia' in T:
+            np.place(T,T == 'Hernia',0)
+            np.place(T,T == 'Spondylolisthesis',1)
+            np.place(T,T == 'Normal',2)
+        #print(T)
+
+        tr0,_ = np.where(T == 0)
+        tr1,_ = np.where(T == 1)
+        tr2,_ = np.where(T == 2)
+        tr3,_ = np.where(T == 3)
+        healthyI = np.where(T == 'Hernia')
+        parkI = np.where(T == 'Spondylolisthesis')
+        normI = np.where(T == 'Normal')
+        tr4,_ = np.where(T == 4)
+        tr5,_ = np.where(T == 5)
+        tr6,_ = np.where(T == 6)
+        tr7,_ = np.where(T == 7)
+        tr8,_ = np.where(T == 8)
+        tr9,_ = np.where(T == 9)
+        tr10,_ = np.where(T == 10)
+        #print(tr0)
+        
+        if(shuffle):
+            healthyI = np.random.permutation(healthyI)
+            parkI = np.random.permutation(parkI)
+            normI = np.random.permutation(normI)
+            tr0 = np.random.permutation(tr0)
+            tr1 = np.random.permutation(tr1)
+            tr2 = np.random.permutation(tr2)
+            tr3 = np.random.permutation(tr3)
+            tr4 = np.random.permutation(tr4)
+            tr5 = np.random.permutation(tr5)
+            tr6 = np.random.permutation(tr6)
+            tr7 = np.random.permutation(tr7)
+            tr8 = np.random.permutation(tr8)
+            tr9 = np.random.permutation(tr9)
+            tr10 = np.random.permutation(tr10)
+        
 
         nHealthy = round(trainf * len(healthyI))
         nPark = round(trainf * len(parkI))
-        rowsTrain = np.hstack((healthyI[:nHealthy], parkI[:nPark]))
+        nNorm = round(trainf * len(normI))
+        ntr0 = round(trainf * len(tr0))
+        ntr1 = round(trainf * len(tr1))
+        ntr2 = round(trainf * len(tr2))
+        ntr3 = round(trainf * len(tr3))
+        ntr4 = round(trainf * len(tr4))
+        ntr5 = round(trainf * len(tr5))
+        ntr6 = round(trainf * len(tr6))
+        ntr7 = round(trainf * len(tr7))
+        ntr8 = round(trainf * len(tr8))
+        ntr9 = round(trainf * len(tr9))
+        ntr10 = round(trainf * len(tr10))
+        #print(("rows0",healthyI,nHealthy,healthyI[:nHealthy]))
+        #print(("rows1",parkI,nPark,parkI[:nPark]))
+        #print(("rows2",tr2,ntr2,tr2[:ntr2]))
+        #print(("rows3",tr3,ntr3,tr3[:ntr3]))
+        
+        rowsTrain = np.hstack((
+                              #healthyI[:nHealthy],
+                              #parkI[:nPark],
+                              #normI[:nNorm],
+                              tr0[:ntr0],
+                              tr1[:ntr1],
+                              tr2[:ntr2],
+                              tr3[:ntr3],
+                              tr4[:ntr4]))
+                              #tr5[:ntr5],
+                              #tr6[:ntr6],
+                              #tr7[:ntr7],
+                              #tr8[:ntr8],
+                              #tr9[:ntr9], 
+                              #tr10[:ntr10]))
+        #print(("rows",rowsTrain))
         Xtrain = X[rowsTrain,:]
         Ttrain = T[rowsTrain,:]
-        rowsTest = np.hstack((healthyI[nHealthy:], parkI[nPark:]))
+        rowsTest = np.hstack((
+                              #healthyI[nHealthy:],
+                              #parkI[nPark:],
+                              #normI[nNorm:],
+                              tr0[ntr0:],
+                              tr1[ntr1:],
+                              tr2[ntr2:],
+                              tr3[ntr3:]))
+                              #tr4[ntr4:]))
+                              #tr5[ntr5:],
+                              #tr6[ntr6:],
+                              #tr7[ntr7:],
+                              #tr8[ntr8:],
+                              #tr9[ntr9:],
+                              #tr10[ntr10:]))
         Xtest =  X[rowsTest,:]
         Ttest =  T[rowsTest,:]
+        #print(Xtest)
+        #print(T)
     else:
         nTrain = int(nRows * seeding)
         trainRows = rows[:nTrain]
