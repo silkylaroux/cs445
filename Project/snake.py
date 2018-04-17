@@ -11,6 +11,8 @@ class Snake:
 
     def get_body(self):
         return self.body
+    def move(self):
+        
 
 
 s = curses.initscr()
